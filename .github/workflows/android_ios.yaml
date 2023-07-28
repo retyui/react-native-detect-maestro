@@ -19,27 +19,45 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
       - name: Build Tmp React Native App
         env:
           # enable new arch for iOS
           RCT_NEW_ARCH_ENABLED: ${{ matrix.new_arch_enabled }}
         run: |
           cd /tmp
-          
-          # create new tmp React Native
+
+          # Create new tmp React Native
           npx react-native@${{ matrix.rn_ver }} init $RN_APP_NAME --version ${{ matrix.rn_ver }}
           cd $RN_APP_NAME
-          
-          # install my module
+
+          # Install my module
           yarn add file:${{ github.workspace }}
 
-          # enable new arch for Android
-          sed -i 's/newArchEnabled=false/newArchEnabled=true/' android/gradle.properties
+          # Debug info
+          npx react-native info
 
-          # build app 
+ 
           if [[ $OSTYPE == 'darwin'* ]]; then
+
+            # Update pods after adding new module
             npx pod-install
+          
+            # Build iOS App
             xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build
+
           else
+
+            # Enable new arch for Android
+            if [[ $RCT_NEW_ARCH_ENABLED == '1' ]]; then
+              sed -i 's/newArchEnabled=false/newArchEnabled=true/' android/gradle.properties
+            fi
+
+            # Build Android App
             ./android/gradlew assembleRelease -p android
+
           fi
