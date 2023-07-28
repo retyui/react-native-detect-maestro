@@ -1,0 +1,46 @@
+{
+  "name": "react-native-detect-maestro",
+  "version": "1.0.0",
+  "main": "dist/cjs/index.js",
+  "module": "dist/mjs/index.js",
+  "react-native": "src",
+  "source": "src",
+  "files": [
+    "dist",
+    "src",
+    "android",
+    "ios",
+    "DetectMaestro.podspec",
+    "!android/build",
+    "!ios/build",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "author": "David <4661784+retyui@users.noreply.github.com>",
+  "description": "Detect Maestro in your React Native App",
+  "homepage": "https://github.com/retyui/react-native-detect-maestro#readme",
+  "bugs": "https://github.com/retyui/react-native-detect-maestro/issues",
+  "repository": "https://github.com/retyui/react-native-detect-maestro",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  },
+  "scripts": {
+    "prebuild": "rm -fr dist",
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json"
+  },
+  "codegenConfig": {
+    "name": "DetectMaestro",
+    "type": "all",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.retyui.detectmaestro"
+    }
+  },
+  "devDependencies": {
+    "react-native": "^0.72.3",
+    "typescript": "^5.1.6"
+  }
+}
