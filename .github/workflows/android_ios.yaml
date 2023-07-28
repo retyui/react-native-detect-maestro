@@ -1,0 +1,45 @@
+name: Android & iOS
+
+on: [push]
+
+env:
+  RN_APP_NAME: MyApp
+
+jobs:
+  build_app:
+    strategy:
+      fail-fast: false
+      matrix:
+        new_arch_enabled: [1, 0]
+        os: [ ubuntu-22.04, macos-12 ]
+        rn_ver: [0.72.3, 0.71.12, 0.70.13, 0.69.12, 0.68.7, 0.67.5, 0.66.5, 0.65.3]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Tmp React Native App
+        env:
+          # enable new arch for iOS
+          RCT_NEW_ARCH_ENABLED: ${{ matrix.new_arch_enabled }}
+        run: |
+          cd /tmp
+          
+          # create new tmp React Native
+          npx react-native@${{ matrix.rn_ver }} init $RN_APP_NAME --version ${{ matrix.rn_ver }}
+          cd $RN_APP_NAME
+          
+          # install my module
+          yarn add file:${{ github.workspace }}
+
+          # enable new arch for Android
+          sed -i 's/newArchEnabled=false/newArchEnabled=true/' android/gradle.properties
+
+          # build app 
+          if [[ $OSTYPE == 'darwin'* ]]; then
+            npx pod-install
+            xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build
+          else
+            ./android/gradlew assembleRelease -p android
+          fi
