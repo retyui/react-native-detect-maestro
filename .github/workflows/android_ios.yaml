@@ -44,11 +44,18 @@ jobs:
  
           if [[ $OSTYPE == 'darwin'* ]]; then
 
+            brew install xcbeautify
+
+            # Fix for "The Swift pod `DetectMaestro` depends upon `React-Fabric`, `React-graphics`, `React-utils`, and `React-debug`, which do not define modules. To opt into those targets generating module maps (which is necessary to import them from Swift when building as static libraries), you may set `use_modular_headers!` globally in your Podfile, or specify `:modular_headers => true` for particular dependencies."
+            if [[ "${{ matrix.rn_ver }}" == "0.72.3" ]]; then
+              echo "use_modular_headers!" >> ios/Podfile
+            fi
+
             # Update pods after adding new module
             npx pod-install
           
             # Build iOS App
-            xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build
+            xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build  | xcbeautify --quiet
 
           else
 
