@@ -1,5 +1,10 @@
 # react-native-detect-maestro
 
+[![react-native-detect-maestro on npm](https://badgen.net/npm/v/react-native-detect-maestro)](https://www.npmjs.com/package/react-native-detect-maestro)
+[![react-native-detect-maestro downloads](https://badgen.net/npm/dm/react-native-detect-maestro)](https://www.npmtrends.com/react-native-detect-maestro)
+[![react-native-detect-maestro install size](https://packagephobia.com/badge?p=react-native-detect-maestro)](https://packagephobia.com/result?p=react-native-detect-maestro)
+[![CI status](https://github.com/retyui/react-native-detect-maestro/actions/workflows/android_ios.yaml/badge.svg)](https://github.com/retyui/react-native-detect-maestro/actions/workflows/android_ios.yaml)
+
 Use this library to detect React Native App is running within the context of Maestro. (based
 on: https://maestro.mobile.dev/advanced/detect-maestro-in-your-app)
 
