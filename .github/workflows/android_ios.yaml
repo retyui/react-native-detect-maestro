@@ -12,7 +12,7 @@ jobs:
       matrix:
         new_arch_enabled: [1, 0]
         os: [ ubuntu-22.04, macos-12 ]
-        rn_ver: [0.72.3, 0.71.12, 0.70.13, 0.69.12, 0.68.7, 0.67.5, 0.66.5, 0.65.3]
+        rn_ver: [0.72.3, 0.71.12, 0.70.13, 0.69.12] #, 0.68.7, 0.67.5, 0.66.5, 0.65.3
 
     runs-on: ${{ matrix.os }}
 
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 16
 
@@ -65,6 +65,6 @@ jobs:
             fi
 
             # Build Android App
-            ./android/gradlew assembleRelease -p android
+            ./android/gradlew assembleRelease -p android --active-arch-only
 
           fi
