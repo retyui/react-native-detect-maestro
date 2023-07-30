@@ -1,0 +1,70 @@
+name: Android & iOS
+
+on: [push]
+
+env:
+  RN_APP_NAME: MyApp
+
+jobs:
+  build_app:
+    strategy:
+      fail-fast: false
+      matrix:
+        new_arch_enabled: [1, 0]
+        os: [ ubuntu-22.04, macos-12 ]
+        rn_ver: [0.72.3, 0.71.12, 0.70.13, 0.69.12, 0.68.7, 0.67.5, 0.66.5, 0.65.3]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16
+
+      - name: Build Tmp React Native App
+        env:
+          # enable new arch for iOS
+          RCT_NEW_ARCH_ENABLED: ${{ matrix.new_arch_enabled }}
+        run: |
+          cd /tmp
+
+          # Create new tmp React Native
+          npx react-native@${{ matrix.rn_ver }} init $RN_APP_NAME --version ${{ matrix.rn_ver }}
+          cd $RN_APP_NAME
+
+          # Install my module
+          yarn add file:${{ github.workspace }}
+
+          # Debug info
+          npx react-native info
+
+ 
+          if [[ $OSTYPE == 'darwin'* ]]; then
+
+            brew install xcbeautify
+
+            # Fix for "The Swift pod `DetectMaestro` depends upon `React-Fabric`, `React-graphics`, `React-utils`, and `React-debug`, which do not define modules. To opt into those targets generating module maps (which is necessary to import them from Swift when building as static libraries), you may set `use_modular_headers!` globally in your Podfile, or specify `:modular_headers => true` for particular dependencies."
+            if [[ "${{ matrix.rn_ver }}" == "0.72.3" ]]; then
+              echo "use_modular_headers!" >> ios/Podfile
+            fi
+
+            # Update pods after adding new module
+            npx pod-install
+          
+            # Build iOS App
+            xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/build  | xcbeautify --quiet
+
+          else
+
+            # Enable new arch for Android
+            if [[ $RCT_NEW_ARCH_ENABLED == '1' ]]; then
+              sed -i 's/newArchEnabled=false/newArchEnabled=true/' android/gradle.properties
+            fi
+
+            # Build Android App
+            ./android/gradlew assembleRelease -p android
+
+          fi
