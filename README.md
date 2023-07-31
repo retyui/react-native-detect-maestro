@@ -33,12 +33,12 @@ DetectMaestro.isMaestro() // true or false
 
 ## Compatible table
 
-|                   | 0.72.x | 0.71.x | 0.70.x | 0.69.x | >=0.68.x |
-|-------------------|--------|--------|--------|--------|----------|
-| Android New Arch. | ✅      | ✅      | ✅      | ❌      | ❌        |
-| Android Old Arch. | ✅      | ✅      | ✅      | ✅      | ❌        |
-| iOS New Arch.     | ✅      | ✅      | ✅      | ✅      | ❌        |
-| iOS Old Arch.     | ✅      | ✅      | ✅      | ✅      | ❌        |
+|                   | 0.72.x | 0.71.x | 0.70.x | 0.69.x | 0.68.x | 0.67.x | 0.66.x | 0.65.x |
+|-------------------|--------|--------|--------|--------|--------|--------|--------|--------|
+| Android New Arch. | ✅      | ✅      | ✅      | ❌      | n/a    | n/a    | n/a    | n/a    |
+| Android Old Arch. | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      |
+| iOS New Arch.     | ✅      | ✅      | ✅      | ✅      | n/a    | n/a    | n/a    | n/a    |
+| iOS Old Arch.     | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      |
 
 ## License
 

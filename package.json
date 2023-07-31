@@ -8,7 +8,7 @@
   "source": "src",
   "peerDependencies": {
     "react": ">=16.4.0",
-    "react-native": ">=0.69.0"
+    "react-native": ">=0.65.0"
   },
   "peerDependenciesMeta": {
     "react": {
