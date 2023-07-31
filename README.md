@@ -36,7 +36,7 @@ DetectMaestro.isMaestro() // true or false
 |                   | 0.72.x | 0.71.x | 0.70.x | 0.69.x | >=0.68.x |
 |-------------------|--------|--------|--------|--------|----------|
 | Android New Arch. | ✅      | ✅      | ✅      | ❌      | ❌        |
-| Android Old Arch. | ✅      | ✅      | ✅      | ❌      | ❌        |
+| Android Old Arch. | ✅      | ✅      | ✅      | ✅      | ❌        |
 | iOS New Arch.     | ✅      | ✅      | ✅      | ✅      | ❌        |
 | iOS Old Arch.     | ✅      | ✅      | ✅      | ✅      | ❌        |
 
