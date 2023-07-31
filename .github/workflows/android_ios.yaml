@@ -65,6 +65,6 @@ jobs:
             fi
 
             # Build Android App
-            ./android/gradlew assembleRelease -p android --active-arch-only
+            ./android/gradlew assembleRelease -p android -PreactNativeArchitectures=x86_64
 
           fi
