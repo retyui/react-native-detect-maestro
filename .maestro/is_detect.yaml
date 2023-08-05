@@ -1,0 +1,12 @@
+appId: ${APP_ID}
+name: Verify that isMaestro works
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "my_btn"
+    timeout: 15000
+- assertVisible: "is_maestro:null"
+- tapOn:
+    id: "my_btn"
+- assertVisible: "is_maestro:true"

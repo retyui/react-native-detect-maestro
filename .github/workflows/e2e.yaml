@@ -1,0 +1,202 @@
+name: Maestro E2E
+
+on: [push]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NO_FLIPPER: 1
+  RN_VER: 0.71.12
+  RN_APP_NAME: MyApp
+
+jobs:
+  build_app:
+    runs-on: macos-12
+    strategy:
+      fail-fast: true
+      matrix:
+        new_arch_enabled: [0, 1]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0'
+          bundler-cache: true
+
+#      - name: Install xcbeautify in background
+#        run: brew install xcbeautify &
+
+      - name: Build React Native App
+        env:
+          RCT_NEW_ARCH_ENABLED: ${{ matrix.new_arch_enabled }} # enable new arch for iOS
+        run: |
+          set -x # all executed commands are printed to the terminal
+
+          cd /tmp
+
+          # Create new tmp React Native
+          npx react-native@$RN_VER init $RN_APP_NAME --version $RN_VER
+          cd $RN_APP_NAME
+
+          # Install my module
+          yarn add file:${{ github.workspace }}
+
+          # Debug info
+          npx react-native info
+
+          # Update pods after adding new module
+          npx pod-install
+
+          rm ./App.tsx
+          cp ${{ github.workspace }}/.maestro/_App.js ./App.tsx
+
+          # Build iOS App
+          # | xcbeautify --quiet
+          xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -type d -name "${{ env.RN_APP_NAME }}.app")
+          mv "$APP_PATH" "${{ github.workspace }}/${{ env.RN_APP_NAME }}.app"
+
+
+      - name: Debug output path
+        run: find ~/Library/Developer/Xcode/DerivedData -type d -name "$RN_APP_NAME.app"
+        continue-on-error: true
+        # Example: /Users/runner/Library/Developer/Xcode/DerivedData/MyApp-<hash>/Build/Products/Release-iphonesimulator/MyApp.app
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ios-app-${{ matrix.new_arch_enabled }}
+          path: ${{ github.workspace }}/${{ env.RN_APP_NAME }}.app
+          retention-days: 1
+          if-no-files-found: error
+
+
+  run_e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        maestro_ver: [1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0, 1.22.1, 1.21.3, 1.20.0]
+    runs-on: macos-12
+    needs: [build_app]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+
+      - name: Run iOS Simulator
+        run: |
+          xcrun simctl boot "iPhone 14"
+
+      - name: Install Maestro
+        run: |
+          brew tap facebook/fb
+          brew install facebook/fb/idb-companion
+          MAESTRO_VERSION=${{ matrix.maestro_ver }} curl -Ls 'https://get.maestro.mobile.dev' | bash
+
+
+
+      ######################################################
+      # OLD Arch E2E
+      ######################################################
+
+      - name: Download .app (Old Arch)
+        uses: actions/download-artifact@v3
+        with:
+          name: ios-app-0
+          path: MyAppOldArch.app
+
+      - name: Debug output path (Old Arch)
+        run: find ./MyAppOldArch.app -type d
+        continue-on-error: true
+
+      - name: Install .app (Old Arch)
+        run: xcrun simctl install booted ./MyAppOldArch.app
+
+      - name: Start video record (Old Arch)
+        run: xcrun simctl io booted recordVideo video_record.mov & echo $! > video_record.pid
+
+      - name: Run e2e (Old Arch)
+        run: |
+          # Retry 3 times before the steps actually fails
+          (echo "===== Install node_modules Attempt:  1 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=org.reactjs.native.example.MyApp -e IS_IOS=true -e IS_CI=true --format junit) || \
+          (echo "===== Install node_modules Attempt:  2 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=org.reactjs.native.example.MyApp -e IS_IOS=true -e IS_CI=true --format junit) || \
+          (echo "===== Install node_modules Attempt:  3 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=org.reactjs.native.example.MyApp -e IS_IOS=true -e IS_CI=true --format junit) || \
+          (echo "===== Install node_modules Step Failed ====" && exit 1)
+
+      - name: Stop video record (Old Arch)
+        if: always()
+        run: |
+          xcrun simctl io booted screenshot last_img.png
+          kill -SIGINT $(cat video_record.pid)
+          $HOME/.maestro/bin/maestro hierarchy
+        continue-on-error: true
+
+      - name: Store video record (Old Arch)
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e_ios_report-${{ matrix.maestro_ver }}-old-arch
+          path: |
+            video_record.mov
+            report.xml
+            last_img.png
+
+      - name: ----- Clean up -----
+        run: rm -rf video_record.mov report.xml video_record.pid last_img.png ~/.maestro/tests/
+
+
+      ######################################################
+      # NEW Arch E2E
+      ######################################################
+      - name: Download .app (New Arch)
+        uses: actions/download-artifact@v3
+        with:
+          name: ios-app-1
+          path: MyAppNewArch.app
+
+      - name: Debug output path (New Arch)
+        run: find ./MyAppNewArch.app -type d
+        continue-on-error: true
+
+      - name: Install .app (New Arch)
+        run: xcrun simctl install booted ./MyAppNewArch.app
+
+      - name: Start video record (New Arch)
+        run: xcrun simctl io booted recordVideo video_record.mov & echo $! > video_record.pid
+
+      - name: Run e2e (New Arch)
+        run: |
+          # Retry 3 times before the steps actually fails
+          (echo "===== Install node_modules Attempt:  1 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=org.reactjs.native.example.MyApp -e IS_IOS=true -e IS_CI=true --format junit) || \
+          (echo "===== Install node_modules Attempt:  2 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=org.reactjs.native.example.MyApp -e IS_IOS=true -e IS_CI=true --format junit) || \
+          (echo "===== Install node_modules Attempt:  3 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=org.reactjs.native.example.MyApp -e IS_IOS=true -e IS_CI=true --format junit) || \
+          (echo "===== Install node_modules Step Failed ====" && exit 1)
+
+      - name: Stop video record (New Arch)
+        if: always()
+        run: |
+          xcrun simctl io booted screenshot last_img.png
+          kill -SIGINT $(cat video_record.pid)
+          $HOME/.maestro/bin/maestro hierarchy
+        continue-on-error: true
+
+      - name: Store video record (New Arch)
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e_ios_report-${{ matrix.maestro_ver }}-new-arch
+          path: |
+            video_record.mov
+            report.xml
+            last_img.png
