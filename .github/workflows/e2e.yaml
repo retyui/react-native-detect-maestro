@@ -21,6 +21,7 @@ jobs:
   build_ios_app:
     runs-on: macos-12
     strategy:
+      max-parallel: 2
       fail-fast: true
       matrix:
         new_arch_enabled: [0, 1]
@@ -86,9 +87,10 @@ jobs:
 
   run_ios_e2e:
     strategy:
+      max-parallel: 4
       fail-fast: false
       matrix:
-        maestro_ver: [1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0, 1.22.1, 1.21.3, 1.20.0]
+        maestro_ver: [1.31.0, 1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0]
     runs-on: macos-12
     needs: [build_ios_app]
     steps:
@@ -215,6 +217,7 @@ jobs:
             report*.xml
             last_img.png
 
+
   build_android_app:
     runs-on: ubuntu-22.04
     strategy:
@@ -278,8 +281,9 @@ jobs:
   run_android_e2e:
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
-        maestro_ver: [1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0, 1.22.1, 1.21.3, 1.20.0]
+        maestro_ver: [1.31.0, 1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0]
     runs-on: macos-12
     needs: [build_android_app]
     steps:
