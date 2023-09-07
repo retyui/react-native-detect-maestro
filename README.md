@@ -18,7 +18,7 @@ yarn add react-native-detect-maestro
 npm install react-native-detect-maestro
 
 # and then
-nxp pod-install
+npx pod-install
 ```
 
 > ⚠️ Note: if you are using React Native `0.72.x` you need to add `use_modular_headers!` in your `ios/Podfile` .
