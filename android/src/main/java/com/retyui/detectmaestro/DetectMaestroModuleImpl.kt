@@ -8,7 +8,7 @@ class DetectMaestroModuleImpl(private val reactContext: ReactApplicationContext)
     fun isMaestro(): Boolean {
         return try {
             Socket("localhost", 7001).use { true }
-        } catch(ignored: IOException) {
+        } catch (ignored: IOException) {
             false
         }
     }

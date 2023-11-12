@@ -1,6 +1,6 @@
 {
   "name": "react-native-detect-maestro",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "license": "MIT",
   "main": "dist/cjs/index.js",
   "module": "dist/mjs/index.js",
@@ -20,8 +20,9 @@
   },
   "scripts": {
     "prebuild": "rm -fr dist",
+    "ts": "tsc --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
-    "prepublishOnly": "yarn build"
+    "prepack": "yarn build"
   },
   "author": "David <4661784+retyui@users.noreply.github.com>",
   "description": "Detect Maestro in your React Native App",

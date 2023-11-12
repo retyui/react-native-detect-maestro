@@ -94,18 +94,17 @@ apply from: "$projectDir/react-native-helpers.gradle"
 def kotlin_ver = safeExtGet('kotlinVersion', '1.7.0')
 
 dependencies {
-    if (project.ext.shouldConsumeReactNativeFromMavenCentral()) {
-        implementation "com.facebook.react:react-android" // Set by the React Native Gradle Plugin
-    } else {
-        implementation 'com.facebook.react:react-native:+' // From node_modules
-        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_ver"
-    }
+  // For < 0.71, this will be from the local maven repo
+  // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
+  //noinspection GradleDynamicVersion
+  implementation "com.facebook.react:react-native:+"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_ver"
 }
 
 if (isNewArchitectureEnabled()) {
-    react {
-        jsRootDir = file("../src/")
-        libraryName = "DetectMaestro"
-        codegenJavaPackageName = "com.retyui.detectmaestro"
-    }
+  react {
+    jsRootDir = file("../src/")
+    libraryName = "DetectMaestro"
+    codegenJavaPackageName = "com.retyui.detectmaestro"
+  }
 }
