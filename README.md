@@ -3,7 +3,8 @@
 [![react-native-detect-maestro on npm](https://badgen.net/npm/v/react-native-detect-maestro)](https://www.npmjs.com/package/react-native-detect-maestro)
 [![react-native-detect-maestro downloads](https://badgen.net/npm/dm/react-native-detect-maestro)](https://www.npmtrends.com/react-native-detect-maestro)
 [![react-native-detect-maestro install size](https://packagephobia.com/badge?p=react-native-detect-maestro)](https://packagephobia.com/result?p=react-native-detect-maestro)
-[![CI status](https://github.com/retyui/react-native-detect-maestro/actions/workflows/android_ios.yaml/badge.svg)](https://github.com/retyui/react-native-detect-maestro/actions/workflows/android_ios.yaml)
+[![CI](https://github.com/retyui/react-native-detect-maestro/actions/workflows/ci.yaml/badge.svg)](https://github.com/retyui/react-native-detect-maestro/actions/workflows/ci.yaml)
+[![E2E](https://github.com/retyui/react-native-detect-maestro/actions/workflows/e2e.yaml/badge.svg)](https://github.com/retyui/react-native-detect-maestro/actions/workflows/e2e.yaml)
 
 Use this library to detect React Native App is running within the context of Maestro. (based
 on: https://maestro.mobile.dev/advanced/detect-maestro-in-your-app)
@@ -33,12 +34,12 @@ DetectMaestro.isMaestro() // true or false
 
 ## Compatible table
 
-|                   | 0.72.x | 0.71.x | 0.70.x | 0.69.x | 0.68.x | 0.67.x | 0.66.x | 0.65.x |
-|-------------------|--------|--------|--------|--------|--------|--------|--------|--------|
-| Android New Arch. | ✅      | ✅      | ✅      | ✅      | ✅      | 🚫     | 🚫     | 🚫     |
-| Android Old Arch. | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      |
-| iOS New Arch.     | ✅      | ✅      | ✅      | ✅      | 🚫     | 🚫     | 🚫     | 🚫     |
-| iOS Old Arch.     | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      | ✅      |
+- Android
+  - New Architecture (react-native `0.70+`)
+  - Old Architecture (react-native `0.65+`)
+- iOS
+  - New Architecture (react-native `0.70+`)
+  - Old Architecture (react-native `0.65+`)
 
 ## License
 
