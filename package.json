@@ -1,6 +1,6 @@
 {
   "name": "react-native-detect-maestro",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "license": "MIT",
   "main": "dist/cjs/index.js",
   "module": "dist/mjs/index.js",
@@ -15,10 +15,10 @@
     }
   },
   "scripts": {
-    "prebuild": "rm -fr dist",
+    "prebuild": "rm -rf dist",
     "ts": "tsc --noEmit",
     "build": "tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
-    "prepack": "yarn build"
+    "prepublishOnly": "yarn build"
   },
   "author": "David <4661784+retyui@users.noreply.github.com>",
   "description": "Detect Maestro in your React Native App",
@@ -31,11 +31,17 @@
     "android",
     "ios",
     "DetectMaestro.podspec",
-    "!android/build",
     "!ios/build",
+    "!android/build",
+    "!android/gradle",
+    "!android/gradle",
+    "!android/gradlew",
+    "!android/gradlew.bat",
+    "!android/local.properties",
     "!**/__tests__",
     "!**/__fixtures__",
-    "!**/__mocks__"
+    "!**/__mocks__",
+    "!**/.*"
   ],
   "codegenConfig": {
     "name": "DetectMaestro",
