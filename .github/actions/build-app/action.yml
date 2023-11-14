@@ -1,5 +1,5 @@
 name: Build App
-description: 'Set up your GitHub Actions workflow with a specific version of Node.js'
+description: Build React Native app for Android or iOS
 inputs:
   new-arch-enabled:
     description: 'Enable new architecture (example: 1 or 0))'
@@ -9,24 +9,15 @@ inputs:
     description: 'Version of React Native (example: 0.72.6))'
     required: true
 
-  arch:
-    description: 'Architecture (example: "arm64-v8a" or "x86_64,arm64-v8a") android only'
-    required: false
-    default: 'armeabi-v7a,arm64-v8a,x86,x86_64'
-
   module-to-install:
     description: 'Module to install (example: "react-native-architectures" or "file:/path/to/module"))'
     required: true
-
-  store-artifacts:
-    description: 'Store artifacts on GitHub (example: true or false))'
-    required: false
-    default: 'true'
 
   platform:
     description: 'Platform (example: android or ios))'
     required: true
 
+  # Optional
   node-version:
     description: 'The Node.js version to set up'
     required: false
@@ -35,6 +26,15 @@ inputs:
     description: 'The Java version to set up'
     required: false
 
+  store-artifacts:
+    description: 'Store artifacts on GitHub (example: true or false))'
+    required: false
+    default: false
+
+  android-arch:
+    description: 'Architecture (example: "arm64-v8a" or "x86_64,arm64-v8a") android only'
+    required: false
+    default: 'armeabi-v7a,arm64-v8a,x86,x86_64'
 
 runs:
   using: 'composite'
@@ -84,6 +84,10 @@ runs:
         # Install my module
         yarn add ${{ inputs.module-to-install }}
 
+        # Apply custom app template
+        rm -rf ./App.tsx ./App.js
+        cp ${{ inputs.module-to-install }}/.maestro/_App.js ./App.js
+
         # Debug info
         npx react-native@${{ inputs.rn-ver }} info
 
@@ -118,7 +122,7 @@ runs:
           fi
 
           # Build Android
-          ./android/gradlew assembleRelease --no-daemon -p android -PreactNativeArchitectures=${{ inputs.arch }}
+          ./android/gradlew assembleRelease --no-daemon -p android -PreactNativeArchitectures=${{ inputs.android-arch }}
 
           # set output variable
           echo "app_path=$(find $(pwd)/android -type f -name '*.apk')" >> $GITHUB_OUTPUT

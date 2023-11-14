@@ -2,10 +2,8 @@ appId: ${APP_ID}
 name: Verify that isMaestro works
 ---
 - launchApp
-- extendedWaitUntil:
-    visible:
-      id: "my_btn"
-    timeout: 15000
+- runFlow: ./_wait_to_open_app.yaml
+
 - assertVisible: "is_maestro:null"
 - tapOn:
     id: "my_btn"

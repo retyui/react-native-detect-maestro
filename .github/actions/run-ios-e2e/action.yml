@@ -1,0 +1,69 @@
+name: Run iOS E2E
+description: Run iOS E2E
+inputs:
+  # Required parameters
+  download-artifact-name:
+    description: 'Name of the artifact to download (example: ios-0.72-newArch-0))'
+    required: true
+
+  upload-artifact-name:
+    description: 'Name of the artifact to upload (example: e2e_ios_report-1.34.1-old-arch))'
+    required: true
+
+  app-id:
+    description: 'App ID (example: org.reactjs.native.example.Example0720App))'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download .app
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.download-artifact-name }}
+        path: MyApp.app
+
+    - name: Debug output path
+      shell: bash
+      run: find ./MyApp.app -type d
+      continue-on-error: true
+
+    - name: Install .app
+      shell: bash
+      run: xcrun simctl install booted ./MyApp.app
+
+    - name: Start video record
+      shell: bash
+      run: xcrun simctl io booted recordVideo video_record.mov & echo $! > video_record.pid
+
+    - name: Run E2E
+      shell: bash
+      run: |
+        # Retry 3 times before the steps actually fails
+        (echo "===== Install node_modules Attempt:  1 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ inputs.app-id }} -e IS_IOS=true -e IS_CI=true --format junit --output report1.xml) || \
+        (echo "===== Install node_modules Attempt:  2 ====" && sleep 20 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ inputs.app-id }} -e IS_IOS=true -e IS_CI=true --format junit --output report2.xml) || \
+        (echo "===== Install node_modules Attempt:  3 ====" && sleep 60 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ inputs.app-id }} -e IS_IOS=true -e IS_CI=true --format junit --output report3.xml) || \
+        (echo "===== Install node_modules Step Failed ====" && exit 1)
+
+    - name: Stop video record (Old Arch)
+      if: always()
+      continue-on-error: true
+      shell: bash
+      run: |
+        xcrun simctl io booted screenshot last_img.png
+        kill -SIGINT $(cat video_record.pid)
+        $HOME/.maestro/bin/maestro hierarchy
+
+    - name: Upload video artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.upload-artifact-name }}
+        path: |
+          video_record.mov
+          report*.xml
+          last_img.png
+
+    - name: ----- Clean up -----
+      shell: bash
+      run: rm -rf video_record.mov report*.xml video_record.pid last_img.png MyApp.app

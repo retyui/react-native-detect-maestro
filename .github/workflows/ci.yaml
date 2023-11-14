@@ -1,4 +1,4 @@
-name: Android & iOS
+name: CI
 
 on:
   pull_request:
@@ -13,9 +13,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  ACTIONS_RUNNER_DEBUG: true # Enable debug logs
-
 jobs:
   cache-node-modules:
     name: Cache node_modules
@@ -24,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: ./.github/actions/install-dependencies
         with:
           lookup-only: true
@@ -37,7 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: ./.github/actions/install-dependencies
 
       - name: Types check
@@ -51,10 +48,10 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
-      max-parallel: 8
+      max-parallel: 12
       matrix:
         new_arch_enabled: [ 1, 0 ]
-        rn_ver: [nightly, next, 0.72, 0.71, '0.70', 0.69, 0.68, 0.67, 0.66, 0.65] # also, can be any npm tag: 0.71-stable, next, nightly
+        rn_ver: [ nightly, next, 0.71, '0.70', 0.69, 0.68, 0.67, 0.66, 0.65 ] # exclude 0.72 because of it will be used for e2e tests (see E2E_RN_VER_TO_TEST)
         exclude:
           - new_arch_enabled: 1
             rn_ver: 0.67
@@ -62,19 +59,18 @@ jobs:
             rn_ver: 0.66
           - new_arch_enabled: 1
             rn_ver: 0.65
-          - new_arch_enabled: 1
-            rn_ver: 0.64
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: ./.github/actions/build-app
         with:
-          arch: arm64-v8a
+          android-arch: arm64-v8a
           new-arch-enabled: ${{ matrix.new_arch_enabled }}
           rn-ver: ${{ matrix.rn_ver }}
-          module-to-install: file:${{ github.workspace }}
+          module-to-install: ${{ github.workspace }}
           store-artifacts: true
           platform: android
           node-version: ${{ contains(matrix.rn_ver, '0.5') && '14' || contains(matrix.rn_ver, '0.6') && '16' || '18' }}
@@ -85,34 +81,20 @@ jobs:
     runs-on: macos-13
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 3
       matrix:
         new_arch_enabled: [ 1, 0 ]
-        rn_ver: [nightly, next, 0.72, 0.71, '0.70', 0.69, 0.68, 0.67, 0.66, 0.65] # also, can be any npm tag: 0.71-stable, next, nightly
-        exclude:
-          - new_arch_enabled: 1
-            rn_ver: 0.68
-          - new_arch_enabled: 1
-            rn_ver: 0.67
-          - new_arch_enabled: 1
-            rn_ver: 0.66
-          - new_arch_enabled: 1
-            rn_ver: 0.65
-          - new_arch_enabled: 1
-            rn_ver: 0.64
-
-
+        rn_ver: [ next, 0.71, '0.70', 0.69 ] # exclude 0.72 because of it will be used for e2e tests (see E2E_RN_VER_TO_TEST)
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: ./.github/actions/build-app
         with:
           new-arch-enabled: ${{ matrix.new_arch_enabled }}
           rn-ver: ${{ matrix.rn_ver }}
-          module-to-install: file:${{ github.workspace }}
+          module-to-install: ${{ github.workspace }}
           store-artifacts: true
           platform: ios
           node-version: ${{ contains(matrix.rn_ver, '0.5') && '14' || contains(matrix.rn_ver, '0.6') && '16' || '18' }}
-          java-version: ${{ contains(matrix.rn_ver, '0.5') && '8' || contains(matrix.rn_ver, '0.6') && '11' || '17' }}
