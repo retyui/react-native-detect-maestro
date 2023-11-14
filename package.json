@@ -7,13 +7,9 @@
   "react-native": "src",
   "source": "src",
   "peerDependencies": {
-    "react": ">=16.4.0",
     "react-native": ">=0.65.0"
   },
   "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
     "react-native": {
       "optional": true
     }
