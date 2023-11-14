@@ -1,392 +1,120 @@
-name: Maestro E2E
+name: E2E
 
 on:
   pull_request:
     branches:
       - main
+    paths:
+      - '**/yarn.lock'            # new dependencies was added
+      - '**/package.json'         # package.json was changed
+      - '**/workflows/e2e.yaml'   # CI pipeline was changed
+      - '**/actions/*/action.yml' # e2e CI actions was changed
+      - '**/.maestro/**'          # e2e tests were changed
+      - '**/src/**'               # js code was changed
+      - '**/scripts/**'           # scripts were changed
+      - '**/android/**'           # android configuration was changed
+      - '**/ios/**'               # ios configuration was changed
 
   push:
     branches:
       - main
+    paths:
+      - '**/yarn.lock'            # new dependencies was added
+      - '**/package.json'         # package.json was changed
+      - '**/workflows/e2e.yaml'   # CI pipeline was changed
+      - '**/actions/*/action.yml' # e2e CI actions was changed
+      - '**/.maestro/**'          # e2e tests were changed
+      - '**/src/**'               # js code was changed
+      - '**/scripts/**'           # scripts were changed
+      - '**/android/**'           # android configuration was changed
+      - '**/ios/**'               # ios configuration was changed
+
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  NO_FLIPPER: 1
-  RN_VER: 0.71.12
-  RN_APP_NAME: MyApp
-  RN_IOS_APP_ID: org.reactjs.native.example.MyApp
-  RN_ANDROID_APP_ID: com.myapp
-  XC_SIMULATOR_NAME: iPhone 14
-  NODE_VER: 16
-  JAVA_VER: 11
-  RUBY_VER: 3.0
+  E2E_ARCH: x86_64
+  E2E_RN_VER_TO_TEST: 72
+  E2E_MAESTRO_VER: 1.34.1
+  E2E_JAVA_VER: 17
 
 jobs:
-  build_ios_app:
-    runs-on: macos-12
-    strategy:
-      max-parallel: 2
-      fail-fast: true
-      matrix:
-        new_arch_enabled: [0, 1]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VER }}
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: ${{ env.RUBY_VER }}
-          bundler-cache: true
-
-      - name: Build React Native App
-        env:
-          RCT_NEW_ARCH_ENABLED: ${{ matrix.new_arch_enabled }} # enable new arch for iOS
-        run: |
-          set -x # all executed commands are printed to the terminal
-
-          cd /tmp
-
-          # Create new tmp React Native
-          npx react-native@$RN_VER init $RN_APP_NAME --version $RN_VER
-          cd $RN_APP_NAME
-
-          # Install my module
-          yarn add file:${{ github.workspace }}
-
-          # Debug info
-          npx react-native info
-
-          # Update pods after adding new module
-          npx pod-install
-
-          rm ./App.tsx
-          cp ${{ github.workspace }}/.maestro/_App.js ./App.tsx
-
-          # Build iOS App (optional: `| xcbeautify --quiet`)
-          xcodebuild -scheme $RN_APP_NAME -workspace ios/$RN_APP_NAME.xcworkspace -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
-
-          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -type d -name "${{ env.RN_APP_NAME }}.app")
-          mv "$APP_PATH" "${{ github.workspace }}/${{ env.RN_APP_NAME }}.app"
-
-
-      - name: Debug output path
-        run: find ~/Library/Developer/Xcode/DerivedData -type d -name "$RN_APP_NAME.app"
-        continue-on-error: true
-        # Example: /Users/runner/Library/Developer/Xcode/DerivedData/MyApp-<hash>/Build/Products/Release-iphonesimulator/MyApp.app
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: ios-app-${{ matrix.new_arch_enabled }}
-          path: ${{ github.workspace }}/${{ env.RN_APP_NAME }}.app
-          retention-days: 1
-          if-no-files-found: error
-
-
-  run_ios_e2e:
-    strategy:
-      max-parallel: 4
-      fail-fast: false
-      matrix:
-        maestro_ver: [1.31.0, 1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0]
-    runs-on: macos-12
-    needs: [build_ios_app]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 1
-
-      - name: Run iOS Simulator
-        run: |
-          echo "All valid available device types"
-          xcrun simctl list devicetypes
-
-          echo "All valid and available runtimes"
-          xcrun simctl list runtimes
-
-          echo "Run simulator"
-          xcrun simctl boot "${{ env.XC_SIMULATOR_NAME }}"
-
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.JAVA_VER }}
-
-      - name: Install Maestro
-        run: |
-          brew tap facebook/fb
-          brew install facebook/fb/idb-companion
-          MAESTRO_VERSION=${{ matrix.maestro_ver }} curl -Ls 'https://get.maestro.mobile.dev' | bash
-
-
-      ######################################################
-      # OLD Arch E2E
-      ######################################################
-
-      - name: Download .app (Old Arch)
-        uses: actions/download-artifact@v3
-        with:
-          name: ios-app-0
-          path: MyAppOldArch.app
-
-      - name: Debug output path (Old Arch)
-        run: find ./MyAppOldArch.app -type d
-        continue-on-error: true
-
-      - name: Install .app (Old Arch)
-        run: xcrun simctl install booted ./MyAppOldArch.app
-
-      - name: Start video record (Old Arch)
-        run: xcrun simctl io booted recordVideo video_record.mov & echo $! > video_record.pid
-
-      - name: Run e2e (Old Arch)
-        run: |
-          # Retry 3 times before the steps actually fails
-          (echo "===== Install node_modules Attempt:  1 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ env.RN_IOS_APP_ID }} -e IS_IOS=true -e IS_CI=true --format junit --output report1.xml) || \
-          (echo "===== Install node_modules Attempt:  2 ====" && sleep 20 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ env.RN_IOS_APP_ID }} -e IS_IOS=true -e IS_CI=true --format junit --output report2.xml) || \
-          (echo "===== Install node_modules Attempt:  3 ====" && sleep 60 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ env.RN_IOS_APP_ID }} -e IS_IOS=true -e IS_CI=true --format junit --output report3.xml) || \
-          (echo "===== Install node_modules Step Failed ====" && exit 1)
-
-      - name: Stop video record (Old Arch)
-        if: always()
-        continue-on-error: true
-        run: |
-          xcrun simctl io booted screenshot last_img.png
-          kill -SIGINT $(cat video_record.pid)
-          $HOME/.maestro/bin/maestro hierarchy
-
-      - name: Upload video artifacts (Old Arch)
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: e2e_ios_report-${{ matrix.maestro_ver }}-old-arch
-          path: |
-            video_record.mov
-            report*.xml
-            last_img.png
-
-      - name: ----- Clean up -----
-        run: rm -rf video_record.mov report*.xml video_record.pid last_img.png MyAppOldArch.app
-
-
-      ######################################################
-      # NEW Arch E2E
-      ######################################################
-      - name: Download .app (New Arch)
-        uses: actions/download-artifact@v3
-        with:
-          name: ios-app-1
-          path: MyAppNewArch.app
-
-      - name: Debug output path (New Arch)
-        run: find ./MyAppNewArch.app -type d
-        continue-on-error: true
-
-      - name: Install .app (New Arch)
-        run: xcrun simctl install booted ./MyAppNewArch.app
-
-      - name: Start video record (New Arch)
-        run: xcrun simctl io booted recordVideo video_record.mov & echo $! > video_record.pid
-
-      - name: Run e2e (New Arch)
-        run: |
-          # Retry 3 times before the steps actually fails
-          (echo "===== Install node_modules Attempt:  1 ====" && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ env.RN_IOS_APP_ID }} -e IS_IOS=true -e IS_CI=true --format junit --output report1.xml) || \
-          (echo "===== Install node_modules Attempt:  2 ====" && sleep 20 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ env.RN_IOS_APP_ID }} -e IS_IOS=true -e IS_CI=true --format junit --output report2.xml) || \
-          (echo "===== Install node_modules Attempt:  3 ====" && sleep 60 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ env.RN_IOS_APP_ID }} -e IS_IOS=true -e IS_CI=true --format junit --output report3.xml) || \
-          (echo "===== Install node_modules Step Failed ====" && exit 1)
-
-      - name: Stop video record (New Arch)
-        if: always()
-        run: |
-          xcrun simctl io booted screenshot last_img.png
-          kill -SIGINT $(cat video_record.pid)
-          $HOME/.maestro/bin/maestro hierarchy
-        continue-on-error: true
-
-      - name: Upload video artifacts (New Arch)
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: e2e_ios_report-${{ matrix.maestro_ver }}-new-arch
-          path: |
-            video_record.mov
-            report*.xml
-            last_img.png
-
-
-  build_android_app:
+  build-android-e2e:
+    name: Build e2e android.apk
     runs-on: ubuntu-22.04
     strategy:
-      fail-fast: true
       matrix:
-        new_arch_enabled: [0, 1]
+        new_arch_enabled: [ 1, 0 ]
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
         with:
           fetch-depth: 1
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: ./.github/actions/build-app
         with:
-          node-version: ${{ env.NODE_VER }}
+          platform: android
+          store-artifacts: true
+          android-arch: ${{ env.E2E_ARCH }}
+          new-arch-enabled: ${{ matrix.new_arch_enabled }}
+          rn-ver: 0.${{ env.E2E_RN_VER_TO_TEST }}
+          module-to-install: ${{ github.workspace }}
+          node-version: 18
+          java-version: ${{ env.E2E_JAVA_VER }}
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.JAVA_VER }}
 
-      - name: Build React Native App
-        working-directory: /tmp
-        run: |
-          set -x # all executed commands are printed to the terminal
 
-          # Create new tmp React Native
-          npx react-native@$RN_VER init $RN_APP_NAME --version $RN_VER
-          cd $RN_APP_NAME
-
-          # Install my module
-          yarn add file:${{ github.workspace }}
-
-          # Debug info
-          npx react-native info
-
-          rm ./App.tsx
-          cp ${{ github.workspace }}/.maestro/_App.js ./App.tsx
-
-          # Enable new arch for Android
-          if [[ "${{ matrix.new_arch_enabled }}" == "1" ]]; then
-            sed -i 's/newArchEnabled=false/newArchEnabled=true/' android/gradle.properties
-          fi
-
-          # Build Android App
-          ./android/gradlew assembleRelease -p android -PreactNativeArchitectures=x86_64
-
-      - name: Debug output path
-        working-directory: /tmp/${{ env.RN_APP_NAME }}
-        run: find ./android -type f -name "*.apk"
-        continue-on-error: true
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: android-apk-${{ matrix.new_arch_enabled }}
-          path: /tmp/${{ env.RN_APP_NAME }}/android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 1
-          if-no-files-found: error
-
-  run_android_e2e:
+  build-ios-e2e:
+    name: Build e2e ios.app
+    runs-on: macos-13
     strategy:
-      fail-fast: false
-      max-parallel: 4
       matrix:
-        maestro_ver: [1.31.0, 1.30.4, 1.29.0, 1.28.0,  1.27.0, 1.26.1, 1.26.0, 1.25.0, 1.24.0, 1.23.0]
+        new_arch_enabled: [ 1, 0 ]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - uses: ./.github/actions/build-app
+        with:
+          platform: ios
+          store-artifacts: true
+          new-arch-enabled: ${{ matrix.new_arch_enabled }}
+          rn-ver: 0.${{ env.E2E_RN_VER_TO_TEST }}
+          module-to-install: ${{ github.workspace }}
+          node-version: 18
+
+
+
+  run-android-e2e:
+    name: Run Android E2E
     runs-on: macos-12
-    needs: [build_android_app]
+    needs: [build-android-e2e]
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
+      - uses: ./.github/actions/run-e2e
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          platform: android
+          maestro-version: ${{ env.E2E_MAESTRO_VER }}
+          react-native-version: ${{ env.E2E_RN_VER_TO_TEST }}
+          android-arch: ${{ env.E2E_ARCH }}
+          java-version: ${{ env.E2E_JAVA_VER }}
 
-      - name: Install Maestro
-        run: MAESTRO_VERSION=${{ matrix.maestro_ver }} curl -Ls 'https://get.maestro.mobile.dev' | bash
-
-
-      ######################################################
-      # OLD Arch E2E
-      ######################################################
-
-      - name: Download .app (Old Arch)
-        uses: actions/download-artifact@v3
+  run_ios_e2e:
+    name: Run iOS E2E
+    runs-on: macos-12 # Downgrade to macos-12 for maestro compatibility
+    needs: [build-ios-e2e]
+    steps:
+      - uses: actions/checkout@v3
         with:
-          name: android-apk-0
-          path: MyAppOldArch/
+          fetch-depth: 1
 
-      - name: Debug output path (Old Arch)
-        run: find . -type f -name "*.apk"
-        continue-on-error: true
-
-      - name: Run Maestro E2E tests (Old Arch)
-        uses: reactivecircus/android-emulator-runner@v2
+      - uses: ./.github/actions/run-e2e
         with:
-          api-level: 31
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          cores: 3
-          ram-size: 4096M
-          heap-size: 1024M
-          script: |
-            # Install apk file (Old Arch)
-            adb install ./MyAppOldArch/app-release.apk
-            # Run e2e
-            RN_ANDROID_APP_ID=${{ env.RN_ANDROID_APP_ID }} bash ./scripts/android_run_e2e.sh
-
-      - name: Upload video artifacts (Old Arch)
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: e2e_android_report-${{ matrix.maestro_ver }}-old-arch
-          path: |
-            video_record.mp4
-            report*.xml
-            last_img.png
-
-      - name: ----- Clean up -----
-        run: rm -rf video_record.mp4 report*.xml video_record.pid last_img.png MyAppOldArch
-
-      ######################################################
-      # NEW Arch E2E
-      ######################################################
-      - name: Download .app (New Arch)
-        uses: actions/download-artifact@v3
-        with:
-          name: android-apk-1
-          path: MyAppNewArch/
-
-      - name: Debug output path (New Arch)
-        run: find ./MyAppNewArch -type d
-        continue-on-error: true
-
-      - name: Run Maestro E2E tests (New Arch)
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          target: google_apis
-          arch: x86_64
-          force-avd-creation: false
-          cores: 3
-          ram-size: 4096M
-          heap-size: 1024M
-          script: |
-            # Install apk file (Old Arch)
-            adb install ./MyAppNewArch/app-release.apk
-            # Run e2e
-            RN_ANDROID_APP_ID=${{ env.RN_ANDROID_APP_ID }} bash ./scripts/android_run_e2e.sh
-
-
-      - name: Upload video artifacts (New Arch)
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: e2e_android_report-${{ matrix.maestro_ver }}-new-arch
-          path: |
-            video_record.mp4
-            report*.xml
-            last_img.png
+          platform: ios
+          maestro-version: ${{ env.E2E_MAESTRO_VER }}
+          react-native-version: ${{ env.E2E_RN_VER_TO_TEST }}

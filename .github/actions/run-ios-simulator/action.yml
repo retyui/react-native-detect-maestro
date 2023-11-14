@@ -1,0 +1,21 @@
+name: Run iOS Simulator
+description: Run iOS Simulator in background
+inputs:
+  simulator-name:
+    description: 'Simulator name (example: iPhone 14)'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run iOS Simulator
+      shell: bash
+      run: |
+        echo "All valid available device types"
+        xcrun simctl list devicetypes
+
+        echo "All valid and available runtimes"
+        xcrun simctl list runtimes
+
+        echo "Run simulator"
+        xcrun simctl boot "${{ inputs.simulator-name }}"

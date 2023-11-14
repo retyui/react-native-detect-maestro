@@ -1,0 +1,44 @@
+appId: ${APP_ID}
+name: Wait until the app is opened
+---
+- runFlow:
+    when:
+      true: ${IS_IOS}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: "my_btn"
+          timeout: 15000
+
+- runFlow:
+    when:
+      true: ${IS_ANDROID}
+    commands:
+      - evalScript: ${output.myStatus = 'unknown'}
+      - evalScript: ${output.attemptsCount = 0}
+      - repeat:
+          while:
+            true: ${output.myStatus === 'unknown'}
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: "my_btn"
+                commands:
+                  - evalScript: ${output.myStatus = 'success'}
+            - runFlow:
+                when:
+                  true: ${output.myStatus === 'unknown'}
+                commands:
+                  - runFlow:
+                      when:
+                        visible: .*Close app.*
+                      commands:
+                        - tapOn: .*Close app.*
+            - runFlow:
+                when:
+                  true: ${output.attemptsCount > 10}
+                commands:
+                  - evalScript: ${output.myStatus = 'timeout'}
+            - evalScript: ${output.attemptsCount = output.attemptsCount + 1}
+      - assertTrue: ${output.myStatus === 'success'}

@@ -1,0 +1,109 @@
+name: Run Android E2E
+description: Run Android E2E
+inputs:
+  # Required parameters
+  download-artifact-name:
+    description: 'Name of the artifact to download (example: android-0.72-newArch-0))'
+    required: true
+
+  upload-artifact-name:
+    description: 'Name of the artifact to upload (example: e2e_android_report-1.34.1-old-arch))'
+    required: true
+
+  app-id:
+    description: 'App ID (example: org.reactjs.native.example.Example0720App))'
+    required: true
+
+  api-level:
+    description: 'API level (example: 30))'
+    required: true
+
+  arch:
+    description: 'Android arch (example: arm64-v8a)'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download .apk
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.download-artifact-name }}
+        path: MyApp
+
+    - name: Debug output path
+      shell: bash
+      run: find . -type f -name "*.apk"
+      continue-on-error: true
+
+    - name: Gradle cache
+      uses: gradle/gradle-build-action@v2
+
+
+    - name: Restore AVD cache
+      uses: actions/cache/restore@v3
+      id: avd-cache
+      with:
+        key: avd-${{ inputs.api-level }}-google_apis-${{ inputs.arch }}
+        lookup-only: true
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+
+    - name: create AVD and generate snapshot for caching
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        target: google_apis
+        arch: ${{ inputs.arch }}
+        force-avd-creation: false
+        cores: 3
+        ram-size: 4096M
+        heap-size: 1024M
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: false
+        script: echo "Generated AVD snapshot for caching."
+
+    - name: Save AVD cache
+      if: steps.avd-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      with:
+        key: ${{ steps.avd-cache.outputs.cache-primary-key }}
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+
+
+    - name: Run Maestro E2E tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: ${{ inputs.api-level }}
+        target: google_apis
+        arch: ${{ inputs.arch }}
+        force-avd-creation: false
+        cores: 3
+        ram-size: 4096M
+        heap-size: 1024M
+        emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: |
+          # Install apk file
+          adb install ./MyApp/app-release.apk
+          # Run e2e
+          RN_ANDROID_APP_ID=${{ inputs.app-id }} bash ./scripts/android_run_e2e.sh
+
+
+    - name: Upload video artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.upload-artifact-name }}
+        path: |
+          video_record.mp4
+          report*.xml
+          last_img.png
+
+    - name: ----- Clean up -----
+      shell: bash
+      run: rm -rf video_record.mp4 report*.xml video_record.pid last_img.png MyApp

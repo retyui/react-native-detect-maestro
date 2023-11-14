@@ -1,0 +1,88 @@
+name: Run E2E
+description: 'Set up your GitHub Actions workflow with a specific version of Node.js'
+inputs:
+  # Required parameters
+  maestro-version:
+    description: 'Version of Maestro (example: 1.34.1))'
+    required: true
+
+  react-native-version:
+    description: 'Version of React Native (example: 72))'
+    required: true
+
+  platform:
+    description: 'Platform (example: android or ios))'
+    required: true
+
+  # Optional parameters
+  java-version:
+    description: 'The Java version to set up'
+    required: false
+    default: 11
+
+  simulator-name:
+    description: 'Simulator name (example: iPhone 14)'
+    required: false
+    default: iPhone 14
+
+  android-arch:
+    description: 'Android arch (example: arm64-v8a)'
+    required: false
+    default: x86_64
+
+  android-api-level:
+    description: 'Android Emulator API level (example: 31)'
+    required: false
+    default: 31
+
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: ./.github/actions/run-ios-simulator
+      if: ${{ inputs.platform == 'ios' }}
+      with:
+        simulator-name: ${{ inputs.simulator-name }}
+
+    - uses: ./.github/actions/install-maestro
+      with:
+        maestro-version: ${{ inputs.maestro-version }}
+        java-version: ${{ inputs.java-version }}
+        platform: ${{ inputs.platform }}
+
+    # iOS: Old Arch
+    - uses: ./.github/actions/run-ios-e2e
+      if: ${{ inputs.platform == 'ios' }}
+      with:
+        download-artifact-name: ios-0.${{ inputs.react-native-version }}-newArch-0
+        app-id: org.reactjs.native.example.Example0${{ inputs.react-native-version }}0App
+        upload-artifact-name: e2e_ios_report-${{ inputs.maestro-version }}-old-arch
+
+    # iOS: New Arch
+    - uses: ./.github/actions/run-ios-e2e
+      if: ${{ inputs.platform == 'ios' }}
+      with:
+        download-artifact-name: ios-0.${{ inputs.react-native-version }}-newArch-1
+        app-id: org.reactjs.native.example.Example0${{ inputs.react-native-version }}1App
+        upload-artifact-name: e2e_ios_report-${{ inputs.maestro-version }}-new-arch
+
+
+    # Android: Old Arch
+    - uses: ./.github/actions/run-android-e2e
+      if: ${{ inputs.platform == 'android' }}
+      with:
+        arch: ${{ inputs.android-arch }}
+        download-artifact-name: android-0.${{ inputs.react-native-version }}-newArch-0
+        app-id: com.example0${{ inputs.react-native-version }}0app
+        upload-artifact-name: e2e_android_report-${{ inputs.maestro-version }}-old-arch
+        api-level: ${{ inputs.android-api-level }}
+
+    # Android: New Arch
+    - uses: ./.github/actions/run-android-e2e
+      if: ${{ inputs.platform == 'android' }}
+      with:
+        arch: ${{ inputs.android-arch }}
+        download-artifact-name: android-0.${{ inputs.react-native-version }}-newArch-1
+        app-id: com.example0${{ inputs.react-native-version }}1app
+        upload-artifact-name: e2e_android_report-${{ inputs.maestro-version }}-new-arch
+        api-level: ${{ inputs.android-api-level }}

@@ -1,0 +1,31 @@
+name: Install Maestro
+description: 'Set up your GitHub Actions workflow with a specific version of Maestro'
+inputs:
+  maestro-version:
+    description: 'Version of Maestro (example: 1.34.1))'
+    required: true
+
+  platform:
+    description: 'Platform (example: android or ios))'
+    required: true
+
+  java-version:
+    description: 'The Java version to set up'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: ./.github/actions/lock-java-ver
+      with:
+        java-version: ${{ inputs.java-version }}
+
+    - name: Install Maestro
+      shell: bash
+      run: |
+        if [[ '${{ inputs.platform }}' == 'ios' ]]; then
+          brew tap facebook/fb
+          brew install facebook/fb/idb-companion
+        fi
+
+        MAESTRO_VERSION=${{ inputs.maestro-version }} curl -Ls 'https://get.maestro.mobile.dev' | bash
