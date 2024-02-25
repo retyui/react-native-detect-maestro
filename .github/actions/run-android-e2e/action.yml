@@ -26,7 +26,7 @@ runs:
   using: 'composite'
   steps:
     - name: Download .apk
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.download-artifact-name }}
         path: MyApp
@@ -41,7 +41,7 @@ runs:
 
 
     - name: Restore AVD cache
-      uses: actions/cache/restore@v3
+      uses: actions/cache/restore@v4
       id: avd-cache
       with:
         key: avd-${{ inputs.api-level }}-google_apis-${{ inputs.arch }}
@@ -67,7 +67,7 @@ runs:
 
     - name: Save AVD cache
       if: steps.avd-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v3
+      uses: actions/cache/save@v4
       with:
         key: ${{ steps.avd-cache.outputs.cache-primary-key }}
         path: |
@@ -96,7 +96,7 @@ runs:
 
     - name: Upload video artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.upload-artifact-name }}
         path: |
