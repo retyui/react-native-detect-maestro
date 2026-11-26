@@ -31,9 +31,9 @@ runs:
       shell: bash
       run: |
         # Retry 3 times before the steps actually fails
-        (echo "===== Install node_modules Attempt:  1 ====" && yarn install --frozen-lockfile) || \
-        (echo "===== Install node_modules Attempt:  2 ====" && yarn install --frozen-lockfile) || \
-        (echo "===== Install node_modules Attempt:  3 ====" && yarn install --frozen-lockfile) || \
+        (echo "===== Install node_modules Attempt:  1 ====" && yarn install --immutable) || \
+        (echo "===== Install node_modules Attempt:  2 ====" && yarn install --immutable) || \
+        (echo "===== Install node_modules Attempt:  3 ====" && yarn install --immutable) || \
         (echo "===== Install node_modules Step Failed ====" && exit 1)
 
 
