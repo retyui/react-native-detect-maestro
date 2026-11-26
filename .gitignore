@@ -34,6 +34,11 @@ local.properties
 *.keystore
 !debug.keystore
 
+# Swift Package Manager (Package.swift at the repo root)
+.build/
+.swiftpm/
+Package.resolved
+
 # node.js
 #
 node_modules/

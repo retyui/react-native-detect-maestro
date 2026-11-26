@@ -6,7 +6,17 @@
 *
 * @see https://developer.apple.com/documentation/swift/importing-swift-into-objective-c#Import-Code-Within-an-App-Target
 */
+#if __has_include("DetectMaestro-Swift.h")
+// CocoaPods: Swift and ObjC sources share one module
 #import "DetectMaestro-Swift.h"
+#else
+// Swift Package Manager: Swift sources live in a separate target
+// (`DetectMaestroImpl`) and its generated header is not importable from ObjC++,
+// so declare the `@objc(DetectMaestroModuleImpl)` interface directly.
+@interface DetectMaestroModuleImpl : NSObject
+- (NSInteger)isMaestro;
+@end
+#endif
 
 #if RCT_NEW_ARCH_ENABLED
 /**
@@ -14,7 +24,12 @@
 *
 * The name of the header matches the name provided in codegenConfig's `name` field in package.json
 */
+#if __has_include(<ReactCodegen/DetectMaestro/DetectMaestro.h>)
+// Swift Package Manager exposes codegen headers through ReactAppHeaders
+#import <ReactCodegen/DetectMaestro/DetectMaestro.h>
+#else
 #import "DetectMaestro.h"
+#endif
 
 /**
 * Each turbo module implements codegenerated spec protocol
