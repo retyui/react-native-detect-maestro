@@ -22,6 +22,9 @@ npm install react-native-detect-maestro
 npx pod-install
 ```
 
+> [!NOTE]
+> **Swift Package Manager** — React Native 0.87+ can build the iOS side with SPM. Once your app uses React Native's SPM integration, this library's `Package.swift` is picked up by the autolinker automatically. Apps using CocoaPods keep working through `DetectMaestro.podspec`, which compiles the same `ios/` sources.
+
 > ⚠️ Note: if you are using React Native `0.72.x` you need to add `use_modular_headers!` in your `ios/Podfile` .
 
 ## Usage

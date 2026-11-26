@@ -31,6 +31,7 @@
     "android",
     "ios",
     "DetectMaestro.podspec",
+    "Package.swift",
     "!ios/build",
     "!android/build",
     "!android/gradle",
@@ -43,6 +44,9 @@
     "!**/__mocks__",
     "!**/.*"
   ],
+  "swiftpmConfig": {
+    "name": "DetectMaestro"
+  },
   "codegenConfig": {
     "name": "DetectMaestro",
     "type": "all",
