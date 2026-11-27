@@ -5,10 +5,16 @@ on:
     types: [opened, synchronize, reopened]
     branches:
       - main
+    paths-ignore:
+      - '**.md'                        # README, CHANGELOG, changesets
+      - 'LICENSE'
 
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'                        # README, CHANGELOG, changesets
+      - 'LICENSE'
 
 permissions:
   contents: read
