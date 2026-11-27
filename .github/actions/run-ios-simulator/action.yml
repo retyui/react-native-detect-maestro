@@ -2,7 +2,7 @@ name: Run iOS Simulator
 description: Run iOS Simulator in background
 inputs:
   simulator-name:
-    description: 'Simulator name (example: iPhone 14)'
+    description: 'Simulator name (example: iPhone 16)'
     required: true
 
 runs:
@@ -18,4 +18,9 @@ runs:
         xcrun simctl list runtimes
 
         echo "Run simulator"
-        xcrun simctl boot "${{ inputs.simulator-name }}"
+        if ! xcrun simctl boot "${{ inputs.simulator-name }}"; then
+          # Device names change between runner images (e.g. "iPhone 14" is gone on macos-15): use the first available iPhone
+          udid=$(xcrun simctl list devices available -j | node -e 'const d=JSON.parse(require("fs").readFileSync(0)).devices;const i=Object.values(d).flat().find(x=>x.name.startsWith("iPhone"));if(!i)process.exit(1);console.log(i.udid)')
+          echo "\"${{ inputs.simulator-name }}\" not found, booting $udid"
+          xcrun simctl boot "$udid"
+        fi
