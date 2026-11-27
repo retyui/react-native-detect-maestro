@@ -34,6 +34,6 @@ if [ -f "$TMP_FILE" ]; then
   rm -rf "$TMP_FILE"
   echo "3 tries have failed..."
   exit 1
-esle
+else
   echo "Success..."
 fi

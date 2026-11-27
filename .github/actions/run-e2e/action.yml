@@ -7,7 +7,7 @@ inputs:
     required: true
 
   react-native-version:
-    description: 'Version of React Native (example: 72))'
+    description: 'React Native version as passed to build-app `rn-ver` (example: latest or 0.73)'
     required: true
 
   platform:
@@ -21,9 +21,9 @@ inputs:
     default: 11
 
   simulator-name:
-    description: 'Simulator name (example: iPhone 14)'
+    description: 'Simulator name (example: iPhone 16)'
     required: false
-    default: iPhone 14
+    default: iPhone 16
 
   android-arch:
     description: 'Android arch (example: arm64-v8a)'
@@ -50,39 +50,31 @@ runs:
         java-version: ${{ inputs.java-version }}
         platform: ${{ inputs.platform }}
 
-    # iOS: Old Arch
-    - uses: ./.github/actions/run-ios-e2e
-      if: ${{ inputs.platform == 'ios' }}
-      with:
-        download-artifact-name: ios-0.${{ inputs.react-native-version }}-newArch-0
-        app-id: org.reactjs.native.example.Example0${{ inputs.react-native-version }}0App
-        upload-artifact-name: e2e_ios_report-${{ inputs.maestro-version }}-old-arch
+    # Same naming as retyui/oss-react-native-build/build-app (new arch only: old arch is not supported on RN >= 0.82)
+    - name: Resolve app names
+      id: names
+      shell: bash
+      env:
+        RN_VER: ${{ inputs.react-native-version }}
+      run: |
+        app_name="Example${RN_VER}1App"
+        app_name="${app_name//[^a-zA-Z0-9]/}"
+        echo "artifact=${{ inputs.platform }}-${RN_VER}-newArch-1" >> "$GITHUB_OUTPUT"
+        echo "ios-app-id=org.reactjs.native.example.${app_name}" >> "$GITHUB_OUTPUT"
+        echo "android-app-id=com.$(echo "$app_name" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
 
-    # iOS: New Arch
     - uses: ./.github/actions/run-ios-e2e
       if: ${{ inputs.platform == 'ios' }}
       with:
-        download-artifact-name: ios-0.${{ inputs.react-native-version }}-newArch-1
-        app-id: org.reactjs.native.example.Example0${{ inputs.react-native-version }}1App
+        download-artifact-name: ${{ steps.names.outputs.artifact }}
+        app-id: ${{ steps.names.outputs.ios-app-id }}
         upload-artifact-name: e2e_ios_report-${{ inputs.maestro-version }}-new-arch
 
-
-    # Android: Old Arch
     - uses: ./.github/actions/run-android-e2e
       if: ${{ inputs.platform == 'android' }}
       with:
         arch: ${{ inputs.android-arch }}
-        download-artifact-name: android-0.${{ inputs.react-native-version }}-newArch-0
-        app-id: com.example0${{ inputs.react-native-version }}0app
-        upload-artifact-name: e2e_android_report-${{ inputs.maestro-version }}-old-arch
-        api-level: ${{ inputs.android-api-level }}
-
-    # Android: New Arch
-    - uses: ./.github/actions/run-android-e2e
-      if: ${{ inputs.platform == 'android' }}
-      with:
-        arch: ${{ inputs.android-arch }}
-        download-artifact-name: android-0.${{ inputs.react-native-version }}-newArch-1
-        app-id: com.example0${{ inputs.react-native-version }}1app
+        download-artifact-name: ${{ steps.names.outputs.artifact }}
+        app-id: ${{ steps.names.outputs.android-app-id }}
         upload-artifact-name: e2e_android_report-${{ inputs.maestro-version }}-new-arch
         api-level: ${{ inputs.android-api-level }}

@@ -2,33 +2,33 @@ name: E2E
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - main
     paths:
-      - '**/yarn.lock'            # new dependencies was added
-      - '**/package.json'         # package.json was changed
-      - '**/workflows/e2e.yaml'   # CI pipeline was changed
-      - '**/actions/*/action.yml' # e2e CI actions was changed
-      - '**/.maestro/**'          # e2e tests were changed
-      - '**/src/**'               # js code was changed
-      - '**/scripts/**'           # scripts were changed
-      - '**/android/**'           # android configuration was changed
-      - '**/ios/**'               # ios configuration was changed
+      - 'package.json'                 # codegenConfig, peer deps, files
+      - 'src/**'                       # JS / codegen spec
+      - 'android/**'                   # Android native code
+      - 'ios/**'                       # iOS native code
+      - 'DetectMaestro.podspec'        # iOS (CocoaPods) build config
+      - '.maestro/**'                  # e2e flows + test app entry (_App.js)
+      - 'scripts/**'                   # e2e runner scripts
+      - '.github/workflows/e2e.yaml'   # this workflow
+      - '.github/actions/**'           # local actions used by this workflow
 
   push:
     branches:
       - main
     paths:
-      - '**/yarn.lock'            # new dependencies was added
-      - '**/package.json'         # package.json was changed
-      - '**/workflows/e2e.yaml'   # CI pipeline was changed
-      - '**/actions/*/action.yml' # e2e CI actions was changed
-      - '**/.maestro/**'          # e2e tests were changed
-      - '**/src/**'               # js code was changed
-      - '**/scripts/**'           # scripts were changed
-      - '**/android/**'           # android configuration was changed
-      - '**/ios/**'               # ios configuration was changed
-
+      - 'package.json'                 # codegenConfig, peer deps, files
+      - 'src/**'                       # JS / codegen spec
+      - 'android/**'                   # Android native code
+      - 'ios/**'                       # iOS native code
+      - 'DetectMaestro.podspec'        # iOS (CocoaPods) build config
+      - '.maestro/**'                  # e2e flows + test app entry (_App.js)
+      - 'scripts/**'                   # e2e runner scripts
+      - '.github/workflows/e2e.yaml'   # this workflow
+      - '.github/actions/**'           # local actions used by this workflow
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,60 +36,53 @@ concurrency:
 
 env:
   E2E_ARCH: x86_64
-  E2E_RN_VER_TO_TEST: 73
+  E2E_RN_VER_TO_TEST: latest
   E2E_MAESTRO_VER: 1.36.0
   E2E_JAVA_VER: 17
 
 jobs:
   build-android-e2e:
     name: Build e2e android.apk
-    runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        new_arch_enabled: [ 1, 0 ]
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: ./.github/actions/build-app
+      - uses: retyui/oss-react-native-build/build-app@v0
         with:
+          app-file: .maestro/_App.js
           platform: android
           store-artifacts: true
           android-arch: ${{ env.E2E_ARCH }}
-          new-arch-enabled: ${{ matrix.new_arch_enabled }}
-          rn-ver: 0.${{ env.E2E_RN_VER_TO_TEST }}
+          new-arch-enabled: 1
+          rn-ver: ${{ env.E2E_RN_VER_TO_TEST }}
           module-to-install: ${{ github.workspace }}
-          node-version: 18
-          java-version: ${{ env.E2E_JAVA_VER }}
 
 
 
   build-ios-e2e:
     name: Build e2e ios.app
-    runs-on: macos-14
-    strategy:
-      matrix:
-        new_arch_enabled: [ 1, 0 ]
+    runs-on: macos-15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - uses: ./.github/actions/build-app
+      - uses: retyui/oss-react-native-build/build-app@v0
         with:
+          app-file: .maestro/_App.js
           platform: ios
           store-artifacts: true
-          new-arch-enabled: ${{ matrix.new_arch_enabled }}
-          rn-ver: 0.${{ env.E2E_RN_VER_TO_TEST }}
+          new-arch-enabled: 1
+          rn-ver: ${{ env.E2E_RN_VER_TO_TEST }}
           module-to-install: ${{ github.workspace }}
-          node-version: 18
 
 
 
   run-android-e2e:
     name: Run Android E2E
-    runs-on: macos-13  # Downgrade to macos-13 to use Intel CPU
+    runs-on: ubuntu-24.04  # Linux + KVM: hardware-accelerated x86_64 emulator
     needs: [build-android-e2e]
     steps:
       - uses: actions/checkout@v4
@@ -106,7 +99,7 @@ jobs:
 
   run_ios_e2e:
     name: Run iOS E2E
-    runs-on: macos-14
+    runs-on: macos-15
     needs: [build-ios-e2e]
     steps:
       - uses: actions/checkout@v4

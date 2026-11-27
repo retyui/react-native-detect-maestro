@@ -36,9 +36,13 @@ runs:
       run: find . -type f -name "*.apk"
       continue-on-error: true
 
-    - name: Gradle cache
-      uses: gradle/gradle-build-action@v2
-
+    - name: Enable KVM
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
 
     - name: Restore AVD cache
       uses: actions/cache/restore@v4
