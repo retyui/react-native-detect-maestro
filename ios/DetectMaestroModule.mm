@@ -18,7 +18,6 @@
 @end
 #endif
 
-#if RCT_NEW_ARCH_ENABLED
 /**
 * Import header file with codegenerated protocols based on the JS specification
 *
@@ -36,7 +35,6 @@
 */
 @interface DetectMaestroModule () <NativeDetectMaestroModuleSpec>
 @end
-#endif
 
 /**
 * Declare the ObjC implementation for that native module class
@@ -66,18 +64,15 @@ RCT_EXPORT_MODULE(DetectMaestroModule)
     return NO;
 }
 
-// Exported methods are overridden - based on the spec class
-RCT_EXPORT_SYNCHRONOUS_TYPED_METHOD(NSNumber *, isMaestro)
+// Implements the method declared by the codegenerated spec protocol
+- (NSNumber *)isMaestro
 {
     return @([moduleImpl isMaestro]);
 }
 
-
-#if RCT_NEW_ARCH_ENABLED
 // Implement RCTTurboModule protocol
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:(const facebook::react::ObjCTurboModule::InitParams &)params {
     return std::make_shared<facebook::react::NativeDetectMaestroModuleSpecJSI>(params);
 }
-#endif
 
 @end

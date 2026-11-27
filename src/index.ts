@@ -1,6 +1,5 @@
 import DM from './NativeDetectMaestroModule';
 
 export const DetectMaestro = {
-    // Cast `1` & `0` on iOS (old arch)
-    isMaestro: (): boolean => Boolean(DM.isMaestro()),
+    isMaestro: (): boolean => DM.isMaestro(),
 } as const;

@@ -16,16 +16,9 @@ buildscript {
   }
 }
 
-def isNewArchitectureEnabled() {
-  return project.hasProperty("newArchEnabled") && project.newArchEnabled == "true"
-}
-
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-
-if (isNewArchitectureEnabled()) {
-  apply plugin: "com.facebook.react"
-}
+apply plugin: "com.facebook.react"
 
 def supportsNamespace() {
   def parsed = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')
@@ -52,7 +45,6 @@ android {
   defaultConfig {
     minSdkVersion safeExtGet('minSdkVersion', 21)
     targetSdkVersion safeExtGet('targetSdkVersion', 33)
-    buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
   }
 
   buildFeatures {
@@ -76,11 +68,7 @@ android {
 
   sourceSets {
     main {
-      if (isNewArchitectureEnabled()) {
-        java.srcDirs += ['src/newarch/java', "${project.buildDir}/generated/source/codegen/java"]
-      } else {
-        java.srcDirs += ['src/oldarch/java']
-      }
+      java.srcDirs += ["${project.buildDir}/generated/source/codegen/java"]
     }
   }
 }
@@ -100,10 +88,8 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_ver"
 }
 
-if (isNewArchitectureEnabled()) {
-  react {
-    jsRootDir = file("../src/")
-    libraryName = "DetectMaestro"
-    codegenJavaPackageName = "com.retyui.detectmaestro"
-  }
+react {
+  jsRootDir = file("../src/")
+  libraryName = "DetectMaestro"
+  codegenJavaPackageName = "com.retyui.detectmaestro"
 }
