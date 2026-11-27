@@ -25,7 +25,20 @@ public class DetectMaestroModuleImpl : NSObject {
         return isRunning
     }
 
+    // Maestro 2.x: `launchApp: { arguments: { isMaestro: true } }` is passed as process arguments:
+    // ["-isMaestro", "true"] for a string value, ["isMaestro", "true"] for a boolean value
+    private func hasLaunchArgument() -> Bool {
+        let args = ProcessInfo.processInfo.arguments
+        for (index, arg) in args.enumerated() where arg == "-isMaestro" || arg == "isMaestro" {
+            if index + 1 < args.count && args[index + 1] == "true" {
+                return true
+            }
+        }
+        return false
+    }
+
     @objc public func isMaestro() -> Int {
-        return isUrlReachable(ipAddress: "http://localhost", port: 22087) ? 1 : 0;
+        // Maestro 1.x: the XCTest runner listens on port 22087 (deprecated; in 2.x the port is random)
+        return hasLaunchArgument() || isUrlReachable(ipAddress: "http://localhost", port: 22087) ? 1 : 0;
     }
 }

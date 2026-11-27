@@ -35,6 +35,18 @@ import {DetectMaestro} from 'react-native-detect-maestro';
 DetectMaestro.isMaestro() // true or false
 ```
 
+### Maestro 2.x
+
+Maestro 2.x picks a random driver port, so pass the `isMaestro` launch argument in your flows:
+
+```yaml
+- launchApp:
+    arguments:
+      isMaestro: true
+```
+
+Maestro 1.x is still detected without the argument (by checking the driver port: `7001` on Android, `22087` on iOS).
+
 ## Compatible table
 
 - Android

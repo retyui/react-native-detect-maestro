@@ -1,7 +1,9 @@
 appId: ${APP_ID}
 name: Verify that isMaestro works
 ---
-- launchApp
+- launchApp:
+    arguments:
+      isMaestro: true
 - runFlow: ./_wait_to_open_app.yaml
 
 - assertVisible: "is_maestro:null"
