@@ -37,7 +37,7 @@ concurrency:
 env:
   E2E_ARCH: x86_64
   E2E_RN_VER_TO_TEST: latest
-  E2E_MAESTRO_VER: 1.36.0
+  E2E_MAESTRO_VER: 2.13.0
   E2E_JAVA_VER: 17
 
 jobs:
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: retyui/oss-react-native-build/build-app@v0
@@ -66,7 +66,7 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: retyui/oss-react-native-build/build-app@v0
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-24.04  # Linux + KVM: hardware-accelerated x86_64 emulator
     needs: [build-android-e2e]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -102,7 +102,7 @@ jobs:
     runs-on: macos-15
     needs: [build-ios-e2e]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
@@ -111,3 +111,4 @@ jobs:
           platform: ios
           maestro-version: ${{ env.E2E_MAESTRO_VER }}
           react-native-version: ${{ env.E2E_RN_VER_TO_TEST }}
+          java-version: ${{ env.E2E_JAVA_VER }}

@@ -23,9 +23,4 @@ runs:
     - name: Install Maestro
       shell: bash
       run: |
-        if [[ '${{ inputs.platform }}' == 'ios' ]]; then
-          brew tap facebook/fb
-          brew install facebook/fb/idb-companion
-        fi
-
         MAESTRO_VERSION=${{ inputs.maestro-version }} curl -Ls 'https://get.maestro.mobile.dev' | bash

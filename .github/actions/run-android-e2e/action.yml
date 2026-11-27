@@ -26,7 +26,7 @@ runs:
   using: 'composite'
   steps:
     - name: Download .apk
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: ${{ inputs.download-artifact-name }}
         path: MyApp
@@ -45,7 +45,7 @@ runs:
         sudo udevadm trigger --name-match=kvm
 
     - name: Restore AVD cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       id: avd-cache
       with:
         key: avd-${{ inputs.api-level }}-google_apis-${{ inputs.arch }}
@@ -71,7 +71,7 @@ runs:
 
     - name: Save AVD cache
       if: steps.avd-cache.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         key: ${{ steps.avd-cache.outputs.cache-primary-key }}
         path: |
@@ -100,7 +100,7 @@ runs:
 
     - name: Upload video artifacts
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ inputs.upload-artifact-name }}
         path: |

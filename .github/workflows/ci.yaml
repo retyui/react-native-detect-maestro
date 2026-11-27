@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: ./.github/actions/install-dependencies
@@ -36,7 +36,7 @@ jobs:
     needs: [cache-node-modules]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: ./.github/actions/install-dependencies
@@ -57,7 +57,7 @@ jobs:
         rn_ver: [ latest ] # also, can be any npm tag: 0.71-stable, next, nightly
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: retyui/oss-react-native-build/build-app@v0
@@ -79,7 +79,7 @@ jobs:
         rn_ver: [ latest ] # also, can be any npm tag: 0.71-stable, next, nightly
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: retyui/oss-react-native-build/build-app@v0
@@ -100,7 +100,7 @@ jobs:
         rn_ver: [ latest ] # also, can be any npm tag: 0.71-stable, next, nightly
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
       - uses: retyui/oss-react-native-build/build-app@v0
