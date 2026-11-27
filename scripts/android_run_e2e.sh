@@ -27,11 +27,10 @@ adb pull /sdcard/last_img.png
 adb pull /sdcard/video_record.mp4
 adb shell rm /sdcard/video_record.mp4
 
-# Debug
-$HOME/.maestro/bin/maestro hierarchy
-
 if [ -f "$TMP_FILE" ]; then
   rm -rf "$TMP_FILE"
+  # Debug
+  $HOME/.maestro/bin/maestro hierarchy
   echo "3 tries have failed..."
   exit 1
 else

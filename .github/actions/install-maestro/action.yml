@@ -16,7 +16,23 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    # macOS runners ship JDKs as JAVA_HOME_<ver>_<arch>; setup-java re-downloads them (~3 min)
+    - name: Use preinstalled Java ${{ inputs.java-version }}
+      id: preinstalled-java
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        var="JAVA_HOME_${{ inputs.java-version }}_${{ runner.arch == 'ARM64' && 'arm64' || 'X64' }}"
+        if [ -n "${!var}" ]; then
+          echo "JAVA_HOME=${!var}" >> "$GITHUB_ENV"
+          echo "${!var}/bin" >> "$GITHUB_PATH"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "$var is not set, falling back to setup-java"
+        fi
+
     - uses: ./.github/actions/lock-java-ver
+      if: steps.preinstalled-java.outputs.found != 'true'
       with:
         java-version: ${{ inputs.java-version }}
 

@@ -28,6 +28,12 @@ runs:
       run: find ./MyApp.app -type d
       continue-on-error: true
 
+    - name: Wait for simulator to boot
+      shell: bash
+      run: |
+        xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+        cat simulator_boot.log || true
+
     - name: Install .app
       shell: bash
       run: xcrun simctl install booted ./MyApp.app
@@ -45,14 +51,19 @@ runs:
         (echo "===== Install node_modules Attempt:  3 ====" && sleep 60 && $HOME/.maestro/bin/maestro test .maestro/ -e APP_ID=${{ inputs.app-id }} -e IS_IOS=true -e IS_CI=true --format junit --output report3.xml) || \
         (echo "===== Install node_modules Step Failed ====" && exit 1)
 
-    - name: Stop video record (Old Arch)
+    - name: Stop video record
       if: always()
       continue-on-error: true
       shell: bash
       run: |
         xcrun simctl io booted screenshot last_img.png
         kill -SIGINT $(cat video_record.pid)
-        $HOME/.maestro/bin/maestro hierarchy
+
+    - name: Debug view hierarchy
+      if: failure()
+      continue-on-error: true
+      shell: bash
+      run: $HOME/.maestro/bin/maestro hierarchy
 
     - name: Upload video artifacts
       if: always()
@@ -66,4 +77,4 @@ runs:
 
     - name: ----- Clean up -----
       shell: bash
-      run: rm -rf video_record.mov report*.xml video_record.pid last_img.png MyApp.app
+      run: rm -rf video_record.mov report*.xml video_record.pid last_img.png MyApp.app simulator_boot.log

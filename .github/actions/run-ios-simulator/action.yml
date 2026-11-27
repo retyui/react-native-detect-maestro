@@ -11,16 +11,17 @@ runs:
     - name: Run iOS Simulator
       shell: bash
       run: |
-        echo "All valid available device types"
-        xcrun simctl list devicetypes
+        # Device names change between runner images (e.g. "iPhone 14" is gone on macos-15): fall back to the first available iPhone
+        udid=$(xcrun simctl list devices available -j | node -e '
+          const name = process.argv[1];
+          const all = Object.values(JSON.parse(require("fs").readFileSync(0)).devices).flat();
+          const d = all.find(x => x.name === name) || all.find(x => x.name.startsWith("iPhone"));
+          if (!d) process.exit(1);
+          if (d.name !== name) console.error(`"${name}" not found, using "${d.name}"`);
+          console.log(d.udid);
+        ' "${{ inputs.simulator-name }}")
+        echo "SIMULATOR_UDID=$udid" >> "$GITHUB_ENV"
 
-        echo "All valid and available runtimes"
-        xcrun simctl list runtimes
-
-        echo "Run simulator"
-        if ! xcrun simctl boot "${{ inputs.simulator-name }}"; then
-          # Device names change between runner images (e.g. "iPhone 14" is gone on macos-15): use the first available iPhone
-          udid=$(xcrun simctl list devices available -j | node -e 'const d=JSON.parse(require("fs").readFileSync(0)).devices;const i=Object.values(d).flat().find(x=>x.name.startsWith("iPhone"));if(!i)process.exit(1);console.log(i.udid)')
-          echo "\"${{ inputs.simulator-name }}\" not found, booting $udid"
-          xcrun simctl boot "$udid"
-        fi
+        # Boot in the background so it overlaps with Java/Maestro setup;
+        # run-ios-e2e waits for it (`simctl bootstatus`) before installing the app
+        nohup xcrun simctl bootstatus "$udid" -b > simulator_boot.log 2>&1 &
