@@ -9,7 +9,7 @@
 Use this library to detect React Native App is running within the context of Maestro. (based
 on: https://maestro.mobile.dev/advanced/detect-maestro-in-your-app)
 
-* support React Native's New & Old Architecture
+* supports React Native's New Architecture only (use `1.x` for the Old Architecture)
 
 ## Getting started
 
@@ -49,12 +49,10 @@ Maestro 1.x is still detected without the argument (by checking the driver port:
 
 ## Compatible table
 
-- Android
-  - New Architecture (react-native `0.70+`)
-  - Old Architecture (react-native `0.65+`)
-- iOS
-  - New Architecture (react-native `0.70+`)
-  - Old Architecture (react-native `0.65+`)
+| Version | React Native | Architecture |
+| ------- | ------------ | ------------ |
+| `2.x`   | `0.71+`      | New only     |
+| `1.x`   | `0.65+`      | New & Old    |
 
 ## License
 
